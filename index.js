@@ -15,22 +15,22 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifyJWT(req, res, next) {
-    // console.log(req.headers.authorization);
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).send('unauthorized access');
-    }
-    const token = authHeader.split(' ')[1];
+// function verifyJWT(req, res, next) {
+//     // console.log(req.headers.authorization);
+//     const authHeader = req.headers.authorization;
+//     if (!authHeader) {
+//         return res.status(401).send('unauthorized access');
+//     }
+//     const token = authHeader.split(' ')[1];
 
-    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
-        if (err) {
-            return res.status(403).send({ message: 'forbidden access' })
-        }
-        req.decoded = decoded;
-        next();
-    })
-}
+//     jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+//         if (err) {
+//             return res.status(403).send({ message: 'forbidden access' })
+//         }
+//         req.decoded = decoded;
+//         next();
+//     })
+// }
 
 async function run() {
     try {
@@ -51,12 +51,12 @@ async function run() {
             res.send(products[0].products)
             // console.log(query)
         });
-        app.get('/bookings', verifyJWT, async (req, res) => {
+        app.get('/bookings', async (req, res) => {
             const email = req.query.email;
-            const decodedEmail = req.decoded.email;
-            if (email !== decodedEmail) {
-                return res.status(403).send({ message: 'forbidden access' });
-            }
+            // const decodedEmail = req.decoded.email;
+            // if (email !== decodedEmail) {
+            //     return res.status(403).send({ message: 'forbidden access' });
+            // }
             // console.log(req.headers.authorization);
             const query = { email: email };
             const bookings = await bookingsCollection.find(query).toArray();
@@ -69,16 +69,28 @@ async function run() {
             // console.log(result);
             res.send(result);
         });
-        app.get('/jwt', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email };
-            const user = await buyersCollection.findOne(query);
-            if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
-                return res.send({ accessToken: token });
-            }
+        // app.get('/jwt', async (req, res) => {
+        //     const email = req.query.email;
+        //     const query = { email: email };
+        //     const user = await buyersCollection.findOne(query);
+        //     if (user) {
+        //         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+        //         return res.send({ accessToken: token });
+        //     }
 
-            res.status(403).send({ accessToken: '' })
+        //     res.status(403).send({ accessToken: '' })
+        // })
+        app.get('/buyers', async (req, res) => {
+            const query = {};
+            const buyers = await buyersCollection.find(query).toArray();
+            res.send(buyers);
+        });
+        app.get('/buyers/admin/:email', async (req, res) => {
+            // const id = req.params.id;
+            const email = req.params.email;
+            const query = { email };
+            const buyer = await buyersCollection.findOne(query);
+            res.send({ isAdmin: buyer?.role === 'admin' });
         })
         app.post('/buyers', async (req, res) => {
             const buyer = req.body;
