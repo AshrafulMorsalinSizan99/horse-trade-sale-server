@@ -97,6 +97,12 @@ async function run() {
             const result = await buyersCollection.insertOne(buyer);
             res.send(result);
         });
+        app.delete('/buyers/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await buyersCollection.deleteOne(filter);
+            res.send(result);
+        })
         // app.put('/admin/:id', async (req, res) => {
         //     const id = req.params.id;
         //     const filter = { _id: ObjectId(id) };
