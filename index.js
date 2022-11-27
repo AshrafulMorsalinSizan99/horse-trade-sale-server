@@ -4,7 +4,9 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const app = express();
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 5000;
+
 
 app.use(cors());
 app.use(express.json());
@@ -37,6 +39,7 @@ async function run() {
         const categoryCollection = client.db('horse-trade-sale').collection('categories');
         const bookingsCollection = client.db('horse-trade-sale').collection('bookings');
         const buyersCollection = client.db('horse-trade-sale').collection('buyers');
+        const sellersCollection = client.db('horse-trade-sale').collection('sellers');
 
         app.get('/categories', async (req, res) => {
             const query = {};
@@ -61,6 +64,12 @@ async function run() {
             const query = { email: email };
             const bookings = await bookingsCollection.find(query).toArray();
             res.send(bookings);
+        });
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await bookingsCollection.findOne(query);
+            res.send(booking);
         })
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
@@ -69,6 +78,22 @@ async function run() {
             // console.log(result);
             res.send(result);
         });
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const resalePrice = booking.resalePrice;
+            const amount = resalePrice * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment-method-types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        })
         // app.get('/jwt', async (req, res) => {
         //     const email = req.query.email;
         //     const query = { email: email };
@@ -97,6 +122,16 @@ async function run() {
             const result = await buyersCollection.insertOne(buyer);
             res.send(result);
         });
+        app.get('/sellers', async (req, res) => {
+            const query = {};
+            const buyers = await sellersCollection.find(query).toArray();
+            res.send(buyers);
+        });
+        app.post('/sellers', async (req, res) => {
+            const seller = req.body;
+            const result = await sellersCollection.insertOne(seller);
+            res.send(result);
+        })
         app.delete('/buyers/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
