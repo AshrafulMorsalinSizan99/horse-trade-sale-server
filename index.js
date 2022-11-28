@@ -42,6 +42,11 @@ async function run() {
         const sellersCollection = client.db('horse-trade-sale').collection('sellers');
         const reportsCollection = client.db('horse-trade-sale').collection('reports');
 
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ token });
+        })
 
         app.get('/categories', async (req, res) => {
             const query = {};
@@ -80,6 +85,11 @@ async function run() {
             // console.log(result);
             res.send(result);
         });
+        app.post('/reportedItems', async (req, res) => {
+            const reported = req.body;
+            const result = await reportsCollection.insertOne(reported);
+            res.send(result);
+        })
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
             const resalePrice = booking.resalePrice;
