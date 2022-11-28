@@ -40,6 +40,8 @@ async function run() {
         const bookingsCollection = client.db('horse-trade-sale').collection('bookings');
         const buyersCollection = client.db('horse-trade-sale').collection('buyers');
         const sellersCollection = client.db('horse-trade-sale').collection('sellers');
+        const reportsCollection = client.db('horse-trade-sale').collection('reports');
+
 
         app.get('/categories', async (req, res) => {
             const query = {};
@@ -131,7 +133,19 @@ async function run() {
             const seller = req.body;
             const result = await sellersCollection.insertOne(seller);
             res.send(result);
-        })
+        });
+        // app.put('/sellers/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const filter = { _id: ObjectId(id) };
+        //     const option = { upsert: true };
+        //     const updatedDoc = {
+        //         $set: {
+        //             role: 'seller'
+        //         }
+        //     }
+        //     const result = await sellersCollection.updateOne(filter, updatedDoc, options);
+        //     res.send(result);
+        // })
         app.delete('/buyers/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
